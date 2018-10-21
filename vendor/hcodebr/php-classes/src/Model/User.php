@@ -38,6 +38,7 @@ class User extends Model
             throw new \Exception("Usuário inexistente ou senha inválida");
         }
     }
+    /* verifica o login */
     public static function verifyLogin($inadmin = true)
     {
         if (
