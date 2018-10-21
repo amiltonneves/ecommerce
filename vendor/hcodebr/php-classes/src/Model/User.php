@@ -4,10 +4,16 @@ namespace Hcode\Model;
 
 use \Hcode\DB\Sql;
 use \Hcode\Model;
+use \Hcode\Mailer;
 
 class User extends Model
 {
     const SESSION = "User";
+
+    const SECRET = "HcodePhp7_Secret";
+    const SECRET_IV = "HcodePhp7_Secret";
+    //define('SECRET_IV', pack('a16', 'senha'));
+    //define('SECRET', pack('a16', 'senha'));
 
     public static function login($login, $password)
     {
@@ -121,7 +127,50 @@ class User extends Model
         $sql->query("call sp_users_delete(:iduser)", array(
             ":iduser"=>$this->getiduser()
         ));
-        
+
+    }
+    public static function getForgot($email)
+    {
+        $sql = new Sql();
+
+        $results = $sql->select("
+            Select *
+            from tb_persons a
+            inner join tb_users b using(idperson)
+            where a.desemail = :EMAIL", array(
+                ":EMAIL"=>$email
+            ));
+        if (count($results) ===0)
+        {
+            throw new \Exception("Não foi possível recuperar a senha");
+        } else {
+            $data = $results[0];
+
+            $results2 = $sql->select("call sp_userspasswordsrecoveries_create(:iduser, :desip)", array(
+                ":iduser" => $data["iduser"],
+                ":desip"=> $_SERVER["REMOTE_ADDR"]
+            ));
+
+            if (count($results2) === 0 )
+            {
+                throw new \Exception("Não foi possível recuperar a senha");
+
+            } else {
+                $dataRecovery = $results2[0];
+
+                $code = base64_encode(openssl_encrypt($dataRecovery["idrecovery"], 'AES-128-CBC', User::SECRET, 0, User::SECRET_IV));
+                $link = "http://www.hcodecommerce.com.br/admin/forgot/reset?code=$code";
+
+                $mailer = new Mailer($data["desemail"], $data["desperson"], "Redefinir Senha do Hcode Store", "forgot", array(
+                        "name" => $data["desperson"],
+                        "link" => $link
+                ));
+
+                $mailer->send();
+
+                return $data;
+            }
+        }
     }
 }
 
