@@ -15,6 +15,45 @@ class User extends Model
     //define('SECRET_IV', pack('a16', 'senha'));
     //define('SECRET', pack('a16', 'senha'));
 
+    public static function getFromSession()
+    {
+        $user = new User();
+
+        if (isset($_SESSION[User::SESSION]) && (int)$_SESSION[User::SESSION]['iduser'] > 0)
+        {
+            $user->setData($_SESSION[User::SESSION]);
+        }
+
+        return $user;
+    }
+
+    public static function checkLogin($inadmin = true)
+    {
+        if (
+            // verificando se a sessão não foi definida
+            !isset($_SESSION[User::SESSION])
+            || // ou
+            // definida mas não contem valor (vazia ou perdeu o valor)
+            !$_SESSION[User::SESSION]
+            ||
+            // verificando se o usuário não existir
+            !(int)$_SESSION[User::SESSION]["iduser"] > 0
+            )
+            {
+                //Não está logado
+                return false;
+            } else {
+                if ($inadmin ===true && $_SESSION[User::SESSION]['inadmin'] ===true)
+                {
+                    return true;
+                } else if ($inadmin === false)
+                {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+    }
     public static function login($login, $password)
     {
         $sql = new Sql();
@@ -47,25 +86,15 @@ class User extends Model
     /* verifica o login */
     public static function verifyLogin($inadmin = true)
     {
-        if (
-            // verificando se a sessão não foi definida
-            !isset($_SESSION[User::SESSION])
-            || // ou
-            // definida mas não contem valor (vazia ou perdeu o valor)
-            !$_SESSION[User::SESSION]
-            ||
-            // verificando se o usuário não existir
-            !(int)$_SESSION[User::SESSION]["iduser"] > 0
-            ||
-            // verificando se o usuário não é administrador
-            (bool)$_SESSION[User::SESSION]["inadmin"] !==$inadmin
-            )
-            {
-                //redirecionando para a tela de login
-                header("Location: /admin/login");
-                exit;
-            }
+        if (User::checkLogin($inadmin))
+        {
+            //redirecionando para a tela de login
+            header("Location: /admin/login");
+            exit;
         }
+
+    }
+
     public static function logout()
     {
         $_SESSION[User::SESSION] = NULL;
