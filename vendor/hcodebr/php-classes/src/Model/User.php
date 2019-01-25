@@ -12,6 +12,8 @@ class User extends Model
 
     const SECRET = "HcodePhp7_Secret";
     const SECRET_IV = "HcodePhp7_Secret";
+    const ERROR = "UserError";
+    const ERROR_REGISTER = "UserErrorRegister";
     //define('SECRET_IV', pack('a16', 'senha'));
     //define('SECRET', pack('a16', 'senha'));
 
@@ -43,7 +45,7 @@ class User extends Model
                 //Não está logado
                 return false;
             } else {
-                if ($inadmin ===true && $_SESSION[User::SESSION]['inadmin'] ===true)
+                if ($inadmin ===true && (bool)$_SESSION[User::SESSION]['inadmin'] ===true)
                 {
                     return true;
                 } else if ($inadmin === false)
@@ -72,6 +74,8 @@ class User extends Model
         {
             $user = new User();
 
+            $data['desperson'] = utf8_encode($data['desperson']);
+
             $user->setData($data);
 
             // Criando sessão e trazendo os valores
@@ -86,10 +90,16 @@ class User extends Model
     /* verifica o login */
     public static function verifyLogin($inadmin = true)
     {
-        if (User::checkLogin($inadmin))
+        if (!User::checkLogin($inadmin))
         {
+            if ($inadmin)
+            {
+                header("Location: /admin/login");
+            } else {
+                header("Location: /login");
+            }
             //redirecionando para a tela de login
-            header("Location: /admin/login");
+
             exit;
         }
 
@@ -113,7 +123,7 @@ class User extends Model
 
         $results = $sql->select("call sp_users_save(:desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)",
         array(
-            ":desperson"=>$this->getdesperson(),
+            ":desperson"=>utf8_decode($this->getdesperson()),
             ":deslogin"=>$this->getdeslogin(),
             ":despassword"=>$this->getdespassword(),
             ":desemail"=>$this->getdesemail(),
@@ -130,6 +140,11 @@ class User extends Model
         $results = $sql->select("select * from tb_users A inner join tb_persons B using(idperson) where A.iduser = :iduser", array(
             ":iduser"=>$iduser
         ));
+
+        $data = $results[0];
+
+        $data['desperson'] = utf8_encode($data['desperson']);
+
         $this->setData($results[0]);
 
     }
@@ -140,7 +155,7 @@ class User extends Model
         $results = $sql->select("call sp_usersupdate_save(:iduser, :desperson, :deslogin, :despassword, :desemail, :nrphone, :inadmin)",
         array(
             ":iduser"=>$this->getiduser(),
-            ":desperson"=>$this->getdesperson(),
+            ":desperson"=>utf8_decode($this->getdesperson()),
             ":deslogin"=>$this->getdeslogin(),
             ":despassword"=>$this->getdespassword(),
             ":desemail"=>$this->getdesemail(),
@@ -245,6 +260,32 @@ class User extends Model
                     ":password"=>$password,
                     ":iduser"=>$this->getiduser()
                 ));
+    }
+    public static function setError($msg)
+    {
+        $_SESSION[User::ERROR] = $msg;
+
+    }
+
+    public static function getError()
+    {
+        $msg = (isset($_SESSION[User::ERROR]) && $_SESSION[User::ERROR]) ?  $_SESSION[User::ERROR] : "";
+
+        User::clearError();
+
+        return $msg;
+    }
+
+    public static function clearError()
+    {
+        $_SESSION[User::ERROR] = NULL;
+    }
+
+    public static function getPasswordHash($password)
+    {
+        return password_hash($password, PASSWORD_DEFAULT, [
+            'cost'=>12
+        ]);
     }
 }
 
