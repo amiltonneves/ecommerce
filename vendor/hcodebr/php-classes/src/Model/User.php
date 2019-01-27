@@ -14,8 +14,6 @@ class User extends Model
     const SECRET_IV = "HcodePhp7_Secret";
     const ERROR = "UserError";
     const ERROR_REGISTER = "UserErrorRegister";
-    //define('SECRET_IV', pack('a16', 'senha'));
-    //define('SECRET', pack('a16', 'senha'));
 
     public static function getFromSession()
     {
@@ -60,7 +58,7 @@ class User extends Model
     {
         $sql = new Sql();
 
-        $results = $sql->select("select * from tb_users  where deslogin= :LOGIN", array(
+        $results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b ON a.idperson = b.idperson WHERE a.deslogin = :LOGIN", array(
             ":LOGIN"=>$login
         ));
 
@@ -71,7 +69,10 @@ class User extends Model
         $data = $results[0];
 
         if (password_verify($password, $data["despassword"]) === true)
-        {
+        {  
+            // var_dump($password);
+            // exit;
+
             $user = new User();
 
             $data['desperson'] = utf8_encode($data['desperson']);
@@ -125,7 +126,7 @@ class User extends Model
         array(
             ":desperson"=>utf8_decode($this->getdesperson()),
             ":deslogin"=>$this->getdeslogin(),
-            ":despassword"=>$this->getdespassword(),
+            ":despassword"=>User::getPasswordHash($this->getdespassword()),
             ":desemail"=>$this->getdesemail(),
             ":nrphone"=>$this->getnrphone(),
             ":inadmin"=>$this->getinadmin()
@@ -157,7 +158,7 @@ class User extends Model
             ":iduser"=>$this->getiduser(),
             ":desperson"=>utf8_decode($this->getdesperson()),
             ":deslogin"=>$this->getdeslogin(),
-            ":despassword"=>$this->getdespassword(),
+            ":despassword"=>User::getPasswordHash($this->getdespassword()),
             ":desemail"=>$this->getdesemail(),
             ":nrphone"=>$this->getnrphone(),
             ":inadmin"=>$this->getinadmin()
@@ -283,10 +284,42 @@ class User extends Model
 
     public static function getPasswordHash($password)
     {
-        return password_hash($password, PASSWORD_DEFAULT, [
-            'cost'=>12
-        ]);
+		return password_hash($password, PASSWORD_DEFAULT, [
+			'cost'=>12
+		]);
     }
+
+    public static function setErrorRegister($msg)
+    {
+        $_SESSION[User::ERROR_REGISTER] = $msg;
+    }
+
+    public static function getErrorRegister()
+    {
+        $msg = (isset($_SESSION[User::ERROR_REGISTER]) && $_SESSION[User::ERROR_REGISTER]) ? $_SESSION[User::ERROR_REGISTER] : '';
+
+        User::clearErrorRegister();
+
+        return $msg;
+    }
+
+    public static function clearErrorRegister()
+    {
+        $_SESSION[User::ERROR_REGISTER] = null;
+    }
+
+    public static function checkLoginExist($login)
+    {
+        $sql = new Sql();
+
+        $results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :deslogin", [
+            ':deslogin'=>$login
+        ]);
+
+        return (count($results) > 0);
+    }
+
+
 }
 
  ?>
