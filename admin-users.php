@@ -65,12 +65,6 @@ $app->post("/admin/users/create", function() {
 
 	$_POST["inadmin"] = (isset($_POST["inadmin"])) ? 1 : 0;
 
-	$_POST['despassword'] = password_hash($_POST["despassword"], PASSWORD_DEFAULT, [
-
- 		"cost"=>12
-
- 	]);
-
 	$user->setData($_POST);
 
 	$user->save();
