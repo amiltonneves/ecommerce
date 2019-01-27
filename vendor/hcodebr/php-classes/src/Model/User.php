@@ -14,6 +14,7 @@ class User extends Model
     const SECRET_IV = "HcodePhp7_Secret";
     const ERROR = "UserError";
     const ERROR_REGISTER = "UserErrorRegister";
+    const SUCCESS = "UserSuccess";
 
     public static function getFromSession()
     {
@@ -146,7 +147,7 @@ class User extends Model
         $this->setData($results[0]);
 
     }
-    public function Update()
+    public function update()
     {
         $sql = new Sql();
 
@@ -320,6 +321,26 @@ class User extends Model
         ]);
 
         return (count($results) > 0);
+    }
+
+    public static function setSuccess($msg)
+    {
+        $_SESSION[User::SUCCESS] = $msg;
+
+    }
+
+    public static function getSuccess()
+    {
+        $msg = (isset($_SESSION[User::SUCCESS]) && $_SESSION[User::SUCCESS]) ?  $_SESSION[User::SUCCESS] : "";
+
+        User::clearSuccess();
+
+        return $msg;
+    }
+
+    public static function clearSuccess()
+    {
+        $_SESSION[User::SUCCESS] = NULL;
     }
 }
 
