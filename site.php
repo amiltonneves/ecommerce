@@ -640,7 +640,7 @@ $app->post("/profile/change-password", function(){
     $user->update();
 
     User::setSuccess("Senha alterada com sucesso.");
-
+ 
     header("Lcoation: /profile/change-password");
 
     exit;
