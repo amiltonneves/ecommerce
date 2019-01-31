@@ -323,25 +323,25 @@ class User extends Model
         return (count($results) > 0);
     }
 
-    public static function setSuccess($msg)
-    {
-        $_SESSION[User::SUCCESS] = $msg;
+        public static function setSuccess($msg)
+        {
+            $_SESSION[User::SUCCESS] = $msg;
 
-    }
+        }
 
-    public static function getSuccess()
-    {
-        $msg = (isset($_SESSION[User::SUCCESS]) && $_SESSION[User::SUCCESS]) ?  $_SESSION[User::SUCCESS] : "";
+        public static function getSuccess()
+        {
+            $msg = (isset($_SESSION[User::SUCCESS]) && $_SESSION[User::SUCCESS]) ?  $_SESSION[User::SUCCESS] : "";
 
-        User::clearSuccess();
+            User::clearSuccess();
 
-        return $msg;
-    }
+            return $msg;
+        }
 
-    public static function clearSuccess()
-    {
-        $_SESSION[User::SUCCESS] = NULL;
-    }
+        public static function clearSuccess()
+        {
+            $_SESSION[User::SUCCESS] = NULL;
+        }
 
     public function getOrders()
     {
@@ -360,6 +360,55 @@ class User extends Model
         ]);
 
         return $results;
+    }
+    public static function getPage($page = 1, $itemsPerPage = 10)
+    {
+        $start = ($page-1) * $itemsPerPage;
+
+        $sql = new Sql();
+
+        $results = $sql->select("
+            SELECT SQL_CALC_FOUND_ROWS * 
+            FROM tb_users A 
+            INNER JOIN tb_persons B USING(idperson) 
+            ORDER BY B.desperson
+            LIMIT $start, $itemsPerPage");
+
+        $resultsTotal = $sql->select("SELECT FOUND_ROWS() as nrtotal;");
+
+        return [
+            'data'=>$results,
+            'total'=>(int)$resultsTotal[0]["nrtotal"],
+            'pages'=>ceil($resultsTotal[0]["nrtotal"] / $itemsPerPage)
+        ];
+    }
+    public static function getPageSearch($search, $page = 1, $itemsPerPage = 10)
+    {
+        $start = ($page-1) * $itemsPerPage;
+
+        $sql = new Sql();
+
+        $results = $sql->select("
+            SELECT SQL_CALC_FOUND_ROWS * 
+            FROM tb_users A 
+            INNER JOIN tb_persons B USING(idperson) 
+            WHERE 
+                B.desperson LIKE :search OR
+                B.desemail = :search OR
+                A.deslogin LIKE :search
+            ORDER BY B.desperson
+            LIMIT $start, $itemsPerPage", [
+                ':search'=>"%".$search."%"
+            ]);
+
+
+        $resultsTotal = $sql->select("SELECT FOUND_ROWS() as nrtotal;");
+
+        return [
+            'data'=>$results,
+            'total'=>(int)$resultsTotal[0]["nrtotal"],
+            'pages'=>ceil($resultsTotal[0]["nrtotal"] / $itemsPerPage)
+        ];
     }
 }
 
