@@ -397,7 +397,7 @@ class User extends Model
                 B.desemail = :search OR
                 A.deslogin LIKE :search
             ORDER BY B.desperson
-            LIMIT $start, $itemsPerPage", [
+            LIMIT $start, $itemsPerPage", [ 
                 ':search'=>"%".$search."%"
             ]);
 
